@@ -298,13 +298,7 @@ def detect_and_color_splash(model):
 					# Display the line in the current frame
 					distance_meters = float(current_distance) / 100.0
 
-					cv2.putText(splash, "Distance: {:.2f} (m)".format(distance_meters), 
-															org = (int(X_LINE) + 0.3, height),
-															font = cv2.FONT_HERSHEY_SIMPLEX,
-															fontScale = 1,
-															color = (0, 255, 255),
-															thickness = 2
-															)
+					cv2.putText(splash, "Distance: {:.2f} (m)".format(distance_meters), (10, int(X_LINE)+1), cv2.FONT_HERSHEY_SIMPLEX, 1, [0, 255, 255],2)
 					cv2.line(splash, (int(X_LINE), 0), (int(X_LINE), height), (0, 255, 255), 2)
 
 					# RGB -> BGR to save image to video
