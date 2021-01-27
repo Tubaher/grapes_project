@@ -70,6 +70,11 @@ VIDEO_CAPTURE_HEIGHT = 720
 # Setting the line crossing
 LINE_COEFF = 0.5
 X_LINE = LINE_COEFF * VIDEO_CAPTURE_WIDTH
+VIDEO_DIRECTION = 'right' # or left 
+						  # if the first grape bunches appear of the left part of the video
+DISTANCE_PER_FRAME = 1 # suppose that the video was recorded with constant velocity
+											 # then the distance per frame is setting accordingly.
+											 # [cm/frames]
 
 ############################################################
 #  Configurations
@@ -166,7 +171,10 @@ def detect_and_color_splash(model):
 		end_frame = 10000000    #600
 		images = []
 		simultaneous_images = model.config.IMAGES_PER_GPU
-		for frameCount in range(totalFrames): 
+		current_distance = 0
+		for frameCount in range(totalFrames):
+			current_distance += DISTANCE_PER_FRAME
+
 			current_time = datetime.datetime.now() 
 			success, image = vcapture.read() 
 			if frameCount < start_frame: 
@@ -256,10 +264,17 @@ def detect_and_color_splash(model):
 							# with its respective frame Count and x_center
 							for row in outputs_red:
 								id_racimo = row[4]
-								xmin = row[0]
-								cross_line = xmin > int(X_LINE)
 
-								if((id_racimo not in racimo_locations) and cross_line):
+								#Detect if the grape bunches cross the line
+								if VIDEO_DIRECTION == 'left':
+									xmin = row[0]
+									cross_line = xmin > int(X_LINE)
+								elif VIDEO_DIRECTION == 'right':
+									xmax = row[2]
+									cross_line = xmax < int(X_LINE)
+
+								#Only accumulate the no-repeated id_racimo when it crosses the line
+								if(id_racimo not in racimo_locations) and cross_line:
 									racimo_locations.update({id_racimo : (frameCount,(row[2]-row[0])/2.0)})
 
 							# Get predition info
@@ -272,14 +287,24 @@ def detect_and_color_splash(model):
 					# Show rectangle with grape count
 					overlay = splash.copy()
 
+					# Display the counted text
 					alpha = 0.6
-
 					label_red = "Conteo de racimos: {}".format(len(racimo_locations.items()))
 					t_size_red = cv2.getTextSize(label_red, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
 					cv2.rectangle(overlay, (0, 0), (t_size_red[0] + 6, t_size_red[1] + 48), [255, 255, 255], -1)
 					cv2.putText(overlay, label_red, (0, 0 + t_size_red[1] + 4), cv2.FONT_HERSHEY_SIMPLEX, 1, [0, 0, 0], 2)
 					splash = cv2.addWeighted(overlay, alpha, splash, 1 - alpha, 0)
 
+					# Display the line in the current frame
+					distance_meters = float(current_distance) / 100.0
+
+					cv2.putText(splash, "Distance: {:.2f} (m)".format(distance_meters), 
+															org = (int(X_LINE) + 0.3, height),
+															font = cv2.FONT_HERSHEY_SIMPLEX,
+															fontScale = 1,
+															color = (0, 255, 255),
+															thickness = 2
+															)
 					cv2.line(splash, (int(X_LINE), 0), (int(X_LINE), height), (0, 255, 255), 2)
 
 					# RGB -> BGR to save image to video
