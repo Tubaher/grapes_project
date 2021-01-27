@@ -70,7 +70,6 @@ VIDEO_CAPTURE_HEIGHT = 720
 # Setting the line crossing
 LINE_COEFF = 0.5
 X_LINE = int(LINE_COEFF * VIDEO_CAPTURE_WIDTH)
-X_THICKNESS =  2
 VIDEO_DIRECTION = 'right' # or left. If the first grape bunches appear of the left part of the video
 DISTANCE_PER_FRAME = 1 # suppose that the video was recorded with constant velocity
 											 # then the distance per frame is setting accordingly.
@@ -119,10 +118,6 @@ def color_splash(image, mask_red):
 
 	Returns result image.
 	"""
-	# Make a grayscale copy of the image. The grayscale copy still
-	# has 3 RGB channels, though.
-	gray = skimage.color.gray2rgb(skimage.color.rgb2gray(image)) * 255
-
 	# Copy color pixels from the original color image where mask is set
 	red = image.copy()
 	red[:, :, 1] = 0
@@ -156,7 +151,7 @@ def process_red_result(result):
 
 		red_result['red_masks'] =\
 			np.array([v for j, v in enumerate(np.swapaxes(result['masks'], 0, 2)) if result['class_ids'][j] == 1]) 
-		red_result['red_masks']=np.swapaxes(result['red_masks'],0,2)
+		red_result['red_masks']=np.swapaxes(red_result['red_masks'],0,2)
 
 		red_result['red_rois'] =\
 			np.array([v for j, v in enumerate(result['rois']) if result['class_ids'][j] == 1])
