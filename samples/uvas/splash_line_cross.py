@@ -69,12 +69,16 @@ VIDEO_CAPTURE_HEIGHT = 720
 
 # Setting the line crossing
 LINE_COEFF = 0.5
-X_LINE = LINE_COEFF * VIDEO_CAPTURE_WIDTH
-VIDEO_DIRECTION = 'right' # or left 
-						  # if the first grape bunches appear of the left part of the video
+X_LINE = int(LINE_COEFF * VIDEO_CAPTURE_WIDTH)
+X_THICKNESS =  2
+VIDEO_DIRECTION = 'right' # or left. If the first grape bunches appear of the left part of the video
 DISTANCE_PER_FRAME = 1 # suppose that the video was recorded with constant velocity
 											 # then the distance per frame is setting accordingly.
 											 # [cm/frames]
+
+											 # TODO: set this value to a more accurate value. 
+											 # If you have the hilera distance, you can get 
+											 # DISTANCE_PER_FRAME = hilera distance / video duration
 
 ############################################################
 #  Configurations
@@ -137,14 +141,40 @@ def color_splash(image, mask_red):
 	return splash
 
 
+def process_red_result(result):
+
+	red_result = {}  	
+
+	red_result['red_masks'] = np.array([])
+	red_result['red_rois'] = np.array([])
+	red_result['red_scores'] = np.array([])
+	# If exists at least 1 detection of a class we procede to extract their respective mask, roi, and score.
+	if 1 in result['class_ids']:
+
+		# changes the rows for channels to itereate over channels that represent a mask and verify if this mask is for class 1
+		# then, it returns the np array back to the normal format 
+
+		red_result['red_masks'] =\
+			np.array([v for j, v in enumerate(np.swapaxes(result['masks'], 0, 2)) if result['class_ids'][j] == 1]) 
+		red_result['red_masks']=np.swapaxes(result['red_masks'],0,2)
+
+		red_result['red_rois'] =\
+			np.array([v for j, v in enumerate(result['rois']) if result['class_ids'][j] == 1])
+		
+		red_result['red_scores'] =\
+			np.array([v for j, v in enumerate(result['scores']) if result['class_ids'][j] == 1])
+
+	return red_result
+					
+
 def detect_and_color_splash(model):
 
 	# Get the file names information
 	input_name = os.path.basename(os.path.normpath(args.video))
 	base_name = input_name.split(".")[0]
-	name, campo_id, cuartel, hilera_id, ampm = base_name.split("_")
+	_, campo_id, cuartel, hilera_id, ampm = base_name.split("_")
 	
-	print("Input File: ",input_name)
+	print("[INFO] Input Video File: ",input_name)
 
 	# Image or video?
 	if args.video:
@@ -155,36 +185,35 @@ def detect_and_color_splash(model):
 		fps = vcapture.get(cv2.CAP_PROP_FPS) 
 
 		# Define codec and create video writer 
-		# file_name = "splash_{:%Y%m%dT%H%M%S}.avi".format(datetime.datetime.now())
-
 		file_name = base_name + "_prediction.avi"
-
 		vwriter = cv2.VideoWriter(os.path.join(args.output_dir,file_name),
 								cv2.VideoWriter_fourcc(*'MJPG'),
 								fps, (width, height))
 
+		# Define variables to record the metadata
 		racimo_locations = {}
 		predictions_output = []
+		current_distance = 0
 
+		# Get the total frames in the current video
 		totalFrames = int(vcapture.get(cv2.CAP_PROP_FRAME_COUNT)) 
-		start_frame  = 1		#500
-		end_frame = 10000000    #600
+		
+		# Define a images variable to perform detections with simultaneous images
 		images = []
 		simultaneous_images = model.config.IMAGES_PER_GPU
-		current_distance = 0
+
 		for frameCount in range(totalFrames):
 			current_distance += DISTANCE_PER_FRAME
 
 			current_time = datetime.datetime.now() 
 			success, image = vcapture.read() 
-			if frameCount < start_frame: 
-				continue 
-			if frameCount > end_frame: break 
+ 
 			if success == False: continue 
 
+			# resize the current frame
 			image = cv2.resize(image, (width, height)) 
 			
-			print("frame: ", frameCount)
+			print("[INFO] Frame: {} FPS: {}".format(frameCount,fps))
 			# Read next image 
 			
 			if success:
@@ -204,36 +233,16 @@ def detect_and_color_splash(model):
 					if(len(result['masks'])==0): 
 						continue 
 					else:
-						
-						result['red_masks'] = np.array([])
-						result['red_rois'] = np.array([])
-						result['red_scores'] = np.array([])
-						# If exists at least 1 detection of a class we procede to extract their respective mask, roi, and score.
-						if 1 in result['class_ids']:
-
-							# changes the rows for channels to itereate over channels that represent a mask and verify if this mask is for class 1
-							# then, it returns the np array back to the normal format 
-
-							result['red_masks'] =\
-								np.array([v for j, v in enumerate(np.swapaxes(result['masks'], 0, 2)) if result['class_ids'][j] == 1]) 
-							result['red_masks']=np.swapaxes(result['red_masks'],0,2)
-
-							result['red_rois'] =\
-								np.array([v for j, v in enumerate(result['rois']) if result['class_ids'][j] == 1])
-							
-							result['red_scores'] =\
-								np.array([v for j, v in enumerate(result['scores']) if result['class_ids'][j] == 1])
-							print("RED SCORES: ", result['red_scores'])
+						result = process_red_result(result)	
 					
 					# Color splash
 					splash = color_splash(images[i], result['red_masks'])
 					
+					# Generate bbox_xywh from detection red
 					detections_red = result["red_rois"] 	#[N, (y1, x1, y2, x2)]
 					bbox_xywh_red = np.zeros((detections_red.shape[0],4))
 
-				
 					if(detections_red is not [] and len(detections_red)!=0):
-						# bbox_xywh_red = detections_red[:, :4].copy()
 
 						# Get the bbox points according YOLO convention
 						bbox_xywh_red[:, 0] = (detections_red[:, 1] + detections_red[:, 3])/2	#x_center
@@ -246,13 +255,8 @@ def detect_and_color_splash(model):
 						for i in range(len(detections_red)):
 							cv2.putText(splash, str(result['red_scores'][i]), (int(bbox_xywh_red[i][0]), int(bbox_xywh_red[i][1])), cv2.FONT_HERSHEY_PLAIN, 1, [255, 255, 255], 1)
 						
-						print('BBOX= ', bbox_xywh_red)
-						# try:
-							# Try to update the tracker of red color
+						# Update the tracker of red color
 						outputs_red = deepsort_red.update(bbox_xywh_red, cls_conf_red, splash)
-						print('Outputs_redddd:', outputs_red)
-						# except:
-						 	# continue
 
 						if len(outputs_red) > 0:
 							# Draw the tracker box # output red row [x1,y1,x2,y2,id_racimo]
@@ -260,52 +264,58 @@ def detect_and_color_splash(model):
 							identities_red = outputs_red[:, -1] 
 							splash = draw_boxes(splash, bbox_xyxy_red, identities_red, class_label="Uva")
 
-							# Get the racimo ids if it is not include in the dict
+							# Get the racimo ids if it is not include in the dict and crosses the line
 							# with its respective frame Count and x_center
 							for row in outputs_red:
 								id_racimo = row[4]
 
+								#Detect if the grape bunches are in the other side of the line
+								# if VIDEO_DIRECTION == 'left':
+								# 	xmin = row[0]
+								# 	cross_line = xmin > X_LINE
+								# elif VIDEO_DIRECTION == 'right':
+								# 	xmax = row[2]
+								# 	cross_line = xmax < X_LINE
+
 								#Detect if the grape bunches cross the line
-								if VIDEO_DIRECTION == 'left':
-									xmin = row[0]
-									cross_line = xmin > int(X_LINE)
-								elif VIDEO_DIRECTION == 'right':
-									xmax = row[2]
-									cross_line = xmax < int(X_LINE)
+								xmin = row[0]
+								xmax = row[2]
+								cross_line = xmin < X_LINE and xmax > X_LINE
 
 								#Only accumulate the no-repeated id_racimo when it crosses the line
 								if(id_racimo not in racimo_locations) and cross_line:
-									racimo_locations.update({id_racimo : (frameCount,(row[2]-row[0])/2.0)})
+									racimo_locations.update({id_racimo : (frameCount,(row[2]-row[0])/2.0, current_distance)})
 
-							# Get predition info
+							# Get prediction info
 							for identity in identities_red:								
 								area = deepsort_red.tracker.get_area_by_id(identity)
 								if area >= 0:
 									# print(str(deepsort.tracker.get_area_by_id(identity)))
-									predictions_output.append((campo_id, cuartel,hilera_id,ampm, int(identity), int(area)))#, "10.5", "11.6", "carmenere", datetime.datetime(2020, 1,1)))
-					
+									predictions_output.append((campo_id, cuartel,hilera_id,ampm, int(identity), int(area)))
+
 					# Show rectangle with grape count
 					overlay = splash.copy()
 
-					# Display the counted text
+					# Display the counted text box
 					alpha = 0.6
 					label_red = "Conteo de racimos: {}".format(len(racimo_locations.items()))
 					t_size_red = cv2.getTextSize(label_red, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
-					cv2.rectangle(overlay, (0, 0), (t_size_red[0] + 6, t_size_red[1] + 48), [255, 255, 255], -1)
+					cv2.rectangle(overlay, (0, 0), (t_size_red[0] + 6, t_size_red[1] + 24), [255, 255, 255], -1)
 					cv2.putText(overlay, label_red, (0, 0 + t_size_red[1] + 4), cv2.FONT_HERSHEY_SIMPLEX, 1, [0, 0, 0], 2)
 					splash = cv2.addWeighted(overlay, alpha, splash, 1 - alpha, 0)
 
-					# Display the line in the current frame
+					# Display the line in the current frame and distance in meters
 					distance_meters = float(current_distance) / 100.0
-
-					cv2.putText(splash, "Distance: {:.2f} (m)".format(distance_meters), 
-															org = (int(X_LINE) + 0.3, height),
-															font = cv2.FONT_HERSHEY_SIMPLEX,
-															fontScale = 1,
-															color = (0, 255, 255),
-															thickness = 2
-															)
-					cv2.line(splash, (int(X_LINE), 0), (int(X_LINE), height), (0, 255, 255), 2)
+					str_distance = "Distance: {:.2f} (m)".format(distance_meters)
+					t_size_distance = cv2.getTextSize(str_distance, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+					cv2.rectangle(splash, (8, height - 5 - 2 - t_size_distance[1]), (t_size_distance[0] + 8 + 4, height - 5 + t_size_distance[1] + 4), [255, 255, 255], -1)
+					cv2.putText(splash, str_distance, 
+														org = (10, height - 5),
+														fontFace = cv2.FONT_HERSHEY_SIMPLEX,
+														fontScale = 0.5,
+														color = [0, 255, 255],
+														thickness = 2	)
+					cv2.line(splash, (X_LINE, 0), (X_LINE, height), (0, 255, 255), 2)
 
 					# RGB -> BGR to save image to video
 					splash = splash[..., ::-1]
@@ -313,16 +323,11 @@ def detect_and_color_splash(model):
 					# Add image to video writer
 					vwriter.write(splash)
 					
-					# Show the video frame
-					# cv2.imshow("img", splash)
-
-
-					# if (cv2.waitKey(1) & 0xFF) == ord('q'): # Hit `q` to exit
-					# 	break
 				images = []
-			print("Time per frame: {}.".format((datetime.datetime.now() - current_time) / simultaneous_images))
+			print("[INFO] Time per frame: {}.".format((datetime.datetime.now() - current_time) / simultaneous_images))
 
 		vwriter.release()
+		print("[INFO] Saving Video File")
 
 		# Create Pickles
 		pickle_name = "prediction_" + str(campo_id) + "_" + str(cuartel) + "_" +str(hilera_id)+ "_"+str(ampm)		
@@ -331,11 +336,15 @@ def detect_and_color_splash(model):
 		with open(os.path.join(predictions_dir, pickle_name + '.pkl'), 'wb') as f:
 			pickle.dump(predictions_output, f)
 
+		print("[INFO] Saving Pickles Predictions")
+
 		pickle_loc_name = "locations_" + str(campo_id) + "_" + str(cuartel) + "_" +str(hilera_id)+ "_"+str(ampm)
 		locations_dir = os.path.join(args.pickles_dir,"location_pickles")
 
 		with open(os.path.join(locations_dir, pickle_loc_name + '.pkl'), 'wb') as f:
 			pickle.dump(racimo_locations, f)
+
+		print("[INFO] Saving Pickles Locations")
 
 def create_dirs():
 	# Create the needed dirs if these does not exists
