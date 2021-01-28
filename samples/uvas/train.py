@@ -174,7 +174,12 @@ def train(model):
     dataset_val.prepare()
 
     # Image augmentation
-    # seq = imgaug.augmenters.Sequential([imgaug.augmenters.Fliplr(0.5),imgaug.augmenters.imgcorruptlike.Contrast(severity=1),imgaug.augmenters.imgcorruptlike.Brightness(severity=random.randint(1,4))])
+    augmentation = imgaug.augmenters.Sometimes(0.5, [
+                    imgaug.augmenters.Fliplr(0.5),
+                    imgaug.augmenters.GaussianBlur(sigma=(0.0, 5.0)),
+                    imgaug.augmenters.imgcorruptlike.Contrast(severity=1),
+                    imgaug.augmenters.imgcorruptlike.Brightness(severity=2)
+                ])
 
     # *** This training schedule is an example. Update to your needs ***
     # Since we're using a very small dataset, and starting from
@@ -185,7 +190,7 @@ def train(model):
                 learning_rate=config.LEARNING_RATE,
                 epochs=config.EPOCHS,
                 layers='heads',
-                augmentation=None)
+                augmentation=augmentation)
 
 if __name__ == '__main__':
     import argparse
