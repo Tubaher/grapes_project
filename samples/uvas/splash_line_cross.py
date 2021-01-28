@@ -31,6 +31,8 @@ import os
 import sys
 import json
 import datetime
+import time
+
 import pickle
 import cv2
 import numpy as np
@@ -41,6 +43,8 @@ from IPython.core.display import display, HTML
 from deep_sort_pytorch.deep_sort import build_tracker
 from deep_sort_pytorch.utils.draw import draw_boxes
 from deep_sort_pytorch.utils.parser import get_config
+
+from utils.text_utils import draw_text_area
 
 import os.path
 from os import path
@@ -163,6 +167,8 @@ def process_red_result(result):
 					
 
 def detect_and_color_splash(model):
+	# Variables to get the proccessing durations
+	start_time = time.time()
 
 	# Get the file names information
 	input_name = os.path.basename(os.path.normpath(args.video))
@@ -177,7 +183,9 @@ def detect_and_color_splash(model):
 		vcapture = cv2.VideoCapture(args.video)
 		width = VIDEO_CAPTURE_WIDTH
 		height = VIDEO_CAPTURE_HEIGHT
-		fps = vcapture.get(cv2.CAP_PROP_FPS) 
+		fps = vcapture.get(cv2.CAP_PROP_FPS)
+
+		print("[INFO] FPS from original video: {:.2f}".format(fps)) 
 
 		# Define codec and create video writer 
 		file_name = base_name + "_prediction.avi"
@@ -197,7 +205,21 @@ def detect_and_color_splash(model):
 		images = []
 		simultaneous_images = model.config.IMAGES_PER_GPU
 
+		# Variables to estimate the FPS while processing the video
+		frames_interval = 30
+		start_time_w = time.time()
+
 		for frameCount in range(totalFrames):
+			#Get infor about the current frame and the estimated FPS
+			if frameCount % frames_interval:
+				time_interval = time.time() - start_time_w
+				fps_w = frames_interval / time_interval
+				start_time_w = time.time()
+				print("[INFO] Frame: {} Estimated FPS: {:.2f}".format(frameCount,fps_w))
+			else:
+				print("[INFO] Frame: {}".format(frameCount))
+    				
+			#Increase the distance
 			current_distance += DISTANCE_PER_FRAME
 
 			current_time = datetime.datetime.now() 
@@ -207,16 +229,13 @@ def detect_and_color_splash(model):
 
 			# resize the current frame
 			image = cv2.resize(image, (width, height)) 
-			
-			print("[INFO] Frame: {} FPS: {}".format(frameCount,fps))
-			# Read next image 
-			
+						
 			if success:
 				# OpenCV returns images as BGR, convert to RGB 
 				image = image[..., ::-1] 
 				images.append(image)
 
-				# TODO: Check to erase or not
+				# Process the prediction with simultaneous images condition
 				if len(images) != simultaneous_images: 
 					continue
 
@@ -248,7 +267,12 @@ def detect_and_color_splash(model):
 						# Put the prediction score in the bbox
 						cls_conf_red = result['red_scores']
 						for i in range(len(detections_red)):
-							cv2.putText(splash, str(result['red_scores'][i]), (int(bbox_xywh_red[i][0]), int(bbox_xywh_red[i][1])), cv2.FONT_HERSHEY_PLAIN, 1, [255, 255, 255], 1)
+							cv2.putText(splash, str(result['red_scores'][i]), 
+													(int(bbox_xywh_red[i][0]), int(bbox_xywh_red[i][1])), 
+													cv2.FONT_HERSHEY_PLAIN, 
+													1, 
+													[255, 255, 255], 
+													1)
 						
 						# Update the tracker of red color
 						outputs_red = deepsort_red.update(bbox_xywh_red, cls_conf_red, splash)
@@ -288,29 +312,16 @@ def detect_and_color_splash(model):
 									# print(str(deepsort.tracker.get_area_by_id(identity)))
 									predictions_output.append((campo_id, cuartel,hilera_id,ampm, int(identity), int(area)))
 
-					# Show rectangle with grape count
-					overlay = splash.copy()
+					# Draw the line in the splash
+					cv2.line(splash, (X_LINE, 0), (X_LINE, height), (0, 255, 255), 2)
 
 					# Display the counted text box
-					alpha = 0.6
 					label_red = "Conteo de racimos: {}".format(len(racimo_locations.items()))
-					t_size_red = cv2.getTextSize(label_red, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
-					cv2.rectangle(overlay, (0, 0), (t_size_red[0] + 6, t_size_red[1] + 24), [255, 255, 255], -1)
-					cv2.putText(overlay, label_red, (0, 0 + t_size_red[1] + 4), cv2.FONT_HERSHEY_SIMPLEX, 1, [0, 0, 0], 2)
-					splash = cv2.addWeighted(overlay, alpha, splash, 1 - alpha, 0)
+					splash = draw_text_area(splash,label_red, (width,height) )
 
 					# Display the line in the current frame and distance in meters
-					distance_meters = float(current_distance) / 100.0
-					str_distance = "Distance: {:.2f} (m)".format(distance_meters)
-					t_size_distance = cv2.getTextSize(str_distance, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
-					cv2.rectangle(splash, (8, height - 5 - 2 - t_size_distance[1]), (t_size_distance[0] + 8 + 4, height - 5 + t_size_distance[1] + 4), [255, 255, 255], -1)
-					cv2.putText(splash, str_distance, 
-														org = (10, height - 5),
-														fontFace = cv2.FONT_HERSHEY_SIMPLEX,
-														fontScale = 0.5,
-														color = [0, 255, 255],
-														thickness = 2	)
-					cv2.line(splash, (X_LINE, 0), (X_LINE, height), (0, 255, 255), 2)
+					str_distance = "Distance: {:.2f} (m)".format(float(current_distance) / 100.0)
+					splash = draw_text_area(splash,str_distance,(width,height), location='left-bottom', text_color=[0, 255, 255])
 
 					# RGB -> BGR to save image to video
 					splash = splash[..., ::-1]
@@ -319,7 +330,8 @@ def detect_and_color_splash(model):
 					vwriter.write(splash)
 					
 				images = []
-			print("[INFO] Time per frame: {}.".format((datetime.datetime.now() - current_time) / simultaneous_images))
+				time_per_frame = (datetime.datetime.now() - current_time) / simultaneous_images
+				print("[INFO] Time per Frame: {}.".format( time_per_frame))
 
 		vwriter.release()
 		print("[INFO] Saving Video File")
@@ -340,6 +352,11 @@ def detect_and_color_splash(model):
 			pickle.dump(racimo_locations, f)
 
 		print("[INFO] Saving Pickles Locations")
+
+		final_time = time.time()
+		duration = final_time - start_time
+		print("[INFO] Total Proccessing Duration Time: {}".format(datetime.timedelta(seconds=int(duration))))
+
 
 def create_dirs():
 	# Create the needed dirs if these does not exists
