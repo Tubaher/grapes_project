@@ -321,7 +321,7 @@ def detect_and_color_splash(model):
 
 					# Display the line in the current frame and distance in meters
 					str_distance = "Distance: {:.2f} (m)".format(float(current_distance) / 100.0)
-					splash = draw_text_area(splash,str_distance,(width,height), location='left-bottom', text_color=[0, 255, 255], thickness = 0.8)
+					splash = draw_text_area(splash,str_distance,(width,height), location='left-bottom', text_color=[0, 255, 255], thickness = 1)
 
 					# RGB -> BGR to save image to video
 					splash = splash[..., ::-1]
