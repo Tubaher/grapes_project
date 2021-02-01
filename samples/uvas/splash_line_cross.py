@@ -101,7 +101,7 @@ class InferenceConfig(Config):
 			# Set batch size where, to process videos in parellel
 			# Batch size = GPU_COUNT * IMAGES_PER_GPU
 	GPU_COUNT = 1
-	IMAGES_PER_GPU = 2
+	IMAGES_PER_GPU = 8
 
 	# Number of classes (including background)
 	NUM_CLASSES = 1 + 1  # Background + grape
@@ -110,7 +110,7 @@ class InferenceConfig(Config):
 	STEPS_PER_EPOCH = 100
 
 	# Skip detections with < 75% confidence
-	DETECTION_MIN_CONFIDENCE = 0.75
+	DETECTION_MIN_CONFIDENCE = 0.9
 
 
 
@@ -205,19 +205,8 @@ def detect_and_color_splash(model):
 		images = []
 		simultaneous_images = model.config.IMAGES_PER_GPU
 
-		# Variables to estimate the FPS while processing the video
-		frames_interval = 30
-		start_time_w = time.time()
-
 		for frameCount in range(totalFrames):
-			#Get infor about the current frame and the estimated FPS
-			if frameCount % frames_interval:
-				time_interval = time.time() - start_time_w
-				fps_w = frames_interval / time_interval
-				start_time_w = time.time()
-				print("[INFO] Frame: {} Estimated FPS: {:.2f}".format(frameCount,fps_w))
-			else:
-				print("[INFO] Frame: {}".format(frameCount))
+      print("[INFO] Frame: {}".format(frameCount))
     				
 			#Increase the distance
 			current_distance += DISTANCE_PER_FRAME
@@ -251,7 +240,8 @@ def detect_and_color_splash(model):
 					
 					# Color splash
 					splash = color_splash(images[i], result['red_masks'])
-					
+					# splash = images[i]
+
 					# Generate bbox_xywh from detection red
 					detections_red = result["red_rois"] 	#[N, (y1, x1, y2, x2)]
 					bbox_xywh_red = np.zeros((detections_red.shape[0],4))
@@ -321,17 +311,17 @@ def detect_and_color_splash(model):
 
 					# Display the line in the current frame and distance in meters
 					str_distance = "Distance: {:.2f} (m)".format(float(current_distance) / 100.0)
-					splash = draw_text_area(splash,str_distance,(width,height), location='left-bottom', text_color=[0, 255, 255], thickness = 1)
+					splash = draw_text_area(splash,str_distance,(width,height), location='left-bottom', text_color=[0, 0, 255], thickness = 1)
 
 					# RGB -> BGR to save image to video
 					splash = splash[..., ::-1]
 
-					# Add image to video writer
-					vwriter.write(splash)
-					
-				images = []
-				time_per_frame = (datetime.datetime.now() - current_time) / simultaneous_images
-				print("[INFO] Time per Frame: {}.".format( time_per_frame))
+          # Add image to video writer
+          vwriter.write(splash)
+        images = []
+        time_per_frame = (datetime.datetime.now() - current_time)/simultaneous_images
+        fps_w = simultaneous_images/(datetime.datetime.now() - current_time)
+        print("[INFO] Time per Frame: {} FPS: {:.2f}.".format( time_per_frame, fps_w))
 
 		vwriter.release()
 		print("[INFO] Saving Video File")
