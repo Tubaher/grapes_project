@@ -206,7 +206,7 @@ def detect_and_color_splash(model):
 		simultaneous_images = model.config.IMAGES_PER_GPU
 
 		for frameCount in range(totalFrames):
-   			print("[INFO] Frame: {}".format(frameCount))
+    			print("[INFO] Frame: {}".format(frameCount))
     				
 			#Increase the distance
 			current_distance += DISTANCE_PER_FRAME
@@ -316,12 +316,13 @@ def detect_and_color_splash(model):
 					# RGB -> BGR to save image to video
 					splash = splash[..., ::-1]
 
-          # Add image to video writer
-          vwriter.write(splash)
-        images = []
-        time_per_frame = (datetime.datetime.now() - current_time)/simultaneous_images
-        fps_w = simultaneous_images/(datetime.datetime.now() - current_time)
-        print("[INFO] Time per Frame: {} FPS: {:.2f}.".format( time_per_frame, fps_w))
+					# Add image to video writer
+					vwriter.write(splash)
+          
+				images = []
+				time_per_frame = (datetime.datetime.now() - current_time)/simultaneous_images
+				fps_w = simultaneous_images/(datetime.datetime.now() - current_time)
+				print("[INFO] Time per Frame: {} FPS: {:.2f}.".format( time_per_frame, fps_w))
 
 		vwriter.release()
 		print("[INFO] Saving Video File")
