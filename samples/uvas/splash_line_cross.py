@@ -206,7 +206,7 @@ def detect_and_color_splash(model):
 		simultaneous_images = model.config.IMAGES_PER_GPU
 
 		for frameCount in range(totalFrames):
-      print("[INFO] Frame: {}".format(frameCount))
+   print("[INFO] Frame: {}".format(frameCount))
     				
 			#Increase the distance
 			current_distance += DISTANCE_PER_FRAME
