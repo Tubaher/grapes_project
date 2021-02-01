@@ -205,11 +205,12 @@ def detect_and_color_splash(model):
 		images = []
 		simultaneous_images = model.config.IMAGES_PER_GPU
 
-		for frameCount in range(totalFrames):
-    			print("[INFO] Frame: {}".format(frameCount))
-    				
+		for frameCount in range(totalFrames):		
 			#Increase the distance
 			current_distance += DISTANCE_PER_FRAME
+
+			#Print the curretn frame
+			print("[INFO] Frame: {}".format(frameCount))
 
 			current_time = datetime.datetime.now() 
 			success, image = vcapture.read() 
