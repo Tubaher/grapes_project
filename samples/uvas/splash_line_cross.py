@@ -322,7 +322,7 @@ def detect_and_color_splash(model):
           
 				images = []
 				time_per_frame = (datetime.datetime.now() - current_time)/simultaneous_images
-				fps_w = float(simultaneous_images)/(datetime.datetime.now() - current_time)
+				fps_w = float(simultaneous_images)/(datetime.datetime.now() - current_time).seconds
 				print("[INFO] Time per Frame: {} FPS: {:.2f}.".format( time_per_frame, fps_w))
 
 		vwriter.release()
