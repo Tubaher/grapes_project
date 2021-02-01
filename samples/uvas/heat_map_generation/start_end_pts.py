@@ -45,6 +45,8 @@ def angle_line(point, angle, length):
     # de la recta con respecto al punto origen
     delta_y = length * math.sin(math.radians(angle))
     delta_x = length * math.cos(math.radians(angle))
+
+    # Devuelve una recta con longitud 2*length 
     return (x-delta_x,y-delta_y),(x+delta_x,y+delta_y)
 
 def line_intersection(line1, line2):
@@ -128,16 +130,16 @@ def find_polygon_divisions(line_pts, polygon_pts, angle):
     """
     # Vértices de los lados donde empiezan las hileras
     start_poly_vertices = polygon_pts[0]
+
     # Vértices de los lados donde terminan las hileras
     end_poly_vertices = polygon_pts[1]
+
     # Largo de los brazos de cada recta de intersección generada
     line_length = 5000
     # Se inicializan los primeros par de vértices, tanto para los vértices finales
     # como iniciales, donde se evaluará intersección
-    start_v_line = (start_poly_vertices[0],\
-        start_poly_vertices[1])
-    end_v_line = (end_poly_vertices[0],\
-        end_poly_vertices[1])
+    start_v_line = (start_poly_vertices[0], start_poly_vertices[1])
+    end_v_line = (end_poly_vertices[0], end_poly_vertices[1])
     start = []
     end = []
     # Las variables siguientes se ocupan para ir cambiando los pares de puntos de cada lado
