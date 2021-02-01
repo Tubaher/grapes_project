@@ -318,7 +318,6 @@ def detect_and_color_splash(model):
 
           # Add image to video writer
           vwriter.write(splash)
-          
         images = []
         time_per_frame = (datetime.datetime.now() - current_time)/simultaneous_images
         fps_w = simultaneous_images/(datetime.datetime.now() - current_time)
