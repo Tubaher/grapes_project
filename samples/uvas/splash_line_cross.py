@@ -72,8 +72,8 @@ VIDEO_CAPTURE_WIDTH = 1920
 VIDEO_CAPTURE_HEIGHT = 1080
 
 # Setting the line crossing
-LINE_COEFF = 0.5
-X_LINE = int(LINE_COEFF * VIDEO_CAPTURE_WIDTH)
+LINE_COEFFS = [0.25, 0.5, 0.25]
+X_LINES = [ int(coeff * VIDEO_CAPTURE_WIDTH) for coeff in LINE_COEFFS ]
 VIDEO_DIRECTION = 'right' # or left. If the first grape bunches appear of the left part of the video
 DISTANCE_PER_FRAME = 1 # suppose that the video was recorded with constant velocity
 											 # then the distance per frame is setting accordingly.
@@ -194,7 +194,7 @@ def detect_and_color_splash(model):
 								fps, (width, height))
 
 		# Define variables to record the metadata
-		racimo_locations = {}
+		racimo_locations = [{} for _ in X_LINES]
 		predictions_output = []
 		current_distance = 0
 
@@ -283,19 +283,20 @@ def detect_and_color_splash(model):
 								#Detect if the grape bunches are in the other side of the line
 								# if VIDEO_DIRECTION == 'left':
 								# 	xmin = row[0]
-								# 	cross_line = xmin > X_LINE
+								# 	cross_line = xmin > X_LINES
 								# elif VIDEO_DIRECTION == 'right':
 								# 	xmax = row[2]
-								# 	cross_line = xmax < X_LINE
+								# 	cross_line = xmax < X_LINES
 
 								#Detect if the grape bunches cross the line
-								xmin = row[0]
-								xmax = row[2]
-								cross_line = xmin < X_LINE and xmax > X_LINE
+								for i, x_line in enumerate(X_LINES):    									
+									xmin = row[0]
+									xmax = row[2]
+									cross_line = xmin < x_line and xmax > x_line
 
-								#Only accumulate the no-repeated id_racimo when it crosses the line
-								if(id_racimo not in racimo_locations) and cross_line:
-									racimo_locations.update({id_racimo : (frameCount,(row[2]-row[0])/2.0, current_distance)})
+									#Only accumulate the no-repeated id_racimo when it crosses the line
+									if(id_racimo not in racimo_locations[i]) and cross_line:
+										racimo_locations[i].update({id_racimo : (frameCount,(row[2]-row[0])/2.0, current_distance)})
 
 							# Get prediction info
 							for identity in identities_red:								
@@ -304,12 +305,17 @@ def detect_and_color_splash(model):
 									# print(str(deepsort.tracker.get_area_by_id(identity)))
 									predictions_output.append((campo_id, cuartel,hilera_id,ampm, int(identity), int(area)))
 
-					# Draw the line in the splash
-					cv2.line(splash, (X_LINE, 0), (X_LINE, height), (0, 255, 255), 2)
+					# Draw the lines in the splash
+					for x_line in X_LINES:
+						cv2.line(splash, (x_line, 0), (x_line, height), (0, 255, 255), 2)
 
 					# Display the counted text box
-					label_red = "Conteo de racimos: {}".format(len(racimo_locations.items()))
-					splash = draw_text_area(splash,label_red, (width,height) )
+					counts_str = ""
+                    for i, x_line in enumerate(X_LINES):
+                        label_red = "Conteo de racimos: {}".format(len(racimo_locations[i].items()))
+                        counts_str += label_red + "\n"
+    	
+					splash = draw_text_area(splash,counts_str, (width,height) )
 
 					# Display the line in the current frame and distance in meters
 					str_distance = "Distance: {:.2f} (m)".format(float(current_distance) / 100.0)
