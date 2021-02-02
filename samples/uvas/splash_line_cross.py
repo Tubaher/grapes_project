@@ -272,8 +272,8 @@ def detect_and_color_splash(model):
 							# Draw the tracker box # output red row [x1,y1,x2,y2,id_racimo]
 							bbox_xyxy_red = outputs_red[:, :4]
 							identities_red = outputs_red[:, -1] 
-							# splash = draw_boxes(splash, bbox_xyxy_red, identities_red, class_label="Uva")
-							splash = draw_boxes(images[i], bbox_xyxy_red, identities_red, class_label="Uva")
+							splash = draw_boxes(splash, bbox_xyxy_red, identities_red, class_label="Uva")
+							# splash = draw_boxes(images[i], bbox_xyxy_red, identities_red, class_label="Uva")
 
 							# Get the racimo ids if it is not include in the dict and crosses the line
 							# with its respective frame Count and x_center
