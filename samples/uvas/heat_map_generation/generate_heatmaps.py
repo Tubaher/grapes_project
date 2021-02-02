@@ -29,7 +29,7 @@ COORDENADAS_POLY = {"2":{"2":{"poly_verts":[[(641,38),(402,38),(388,613)],[(641,
 # Size, in pixels, of each segment in the row.
 DELTA_H = 20
 LINE_WIDTH = 1.8
-TOP_BOUNDARY_COUNT = 400
+TOP_BOUNDARY_COUNT = 200
 
 def read_location_pickle(frames_cuartel, pickle_filename):
 	"""
@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
 	if args.boundary is not None:
 		TOP_BOUNDARY_COUNT = int(args.boundary)
-	cmap = cm.get_cmap('hot',(100, 256))
+	cmap = cm.get_cmap('hot', 256)
 	newcolors = cmap(np.linspace(0,1,TOP_BOUNDARY_COUNT))
 	newcmp = ListedColormap(newcolors)
 	boundary = list(range(0,TOP_BOUNDARY_COUNT))
