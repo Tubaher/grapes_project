@@ -194,7 +194,8 @@ def detect_and_color_splash(model):
 								fps, (width, height))
 
 		# Define variables to record the metadata
-		racimo_locations = [{} for _ in X_LINES]
+		racimo_locations = {}
+                counters = [0 for _ in X_LINES]
 		predictions_output = []
 		current_distance = 0
 
@@ -295,8 +296,9 @@ def detect_and_color_splash(model):
 									cross_line = xmin < x_line and xmax > x_line
 
 									#Only accumulate the no-repeated id_racimo when it crosses the line
-									if(id_racimo not in racimo_locations[i]) and cross_line:
-										racimo_locations[i].update({id_racimo : (frameCount,(row[2]-row[0])/2.0, current_distance)})
+									if(id_racimo not in racimo_locations) and cross_line:
+                                                                            counters[i] += 1
+                                                                            racimo_locations.update({id_racimo : (frameCount,(row[2]-row[0])/2.0, current_distance)})
 
 							# Get prediction info
 							for identity in identities_red:								
@@ -310,10 +312,9 @@ def detect_and_color_splash(model):
 						splash = cv2.line(splash, (x_line, 0), (x_line, height), (0, 255, 255), 2)
 
 					# Display the counted text box
-					offsets = [0, 10 , 20]
 					for i, x_line in enumerate(X_LINES):
-                        			label_red = "Conteo de racimos: {}".format(len(racimo_locations[i].items()))
-									splash = draw_text_area(splash,label_red, (width,height), offset = offsets[i] )
+                        			label_red = "Conteo de racimos Linea {}: {}".format(i,counters[i])
+                                                splash = draw_text_area(splash,label_red, (width,height), y_offset = i )
 
 					# Display the line in the current frame and distance in meters
 					str_distance = "Distance: {:.2f} (m)".format(float(current_distance) / 100.0)
