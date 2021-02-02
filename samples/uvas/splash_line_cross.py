@@ -309,7 +309,7 @@ def detect_and_color_splash(model):
 					for x_line in X_LINES:
 						splash = cv2.line(splash, (x_line, 0), (x_line, height), (0, 255, 255), 2)
 
-					# Display the counted text box
+					# Display the counted text box .
 					offsets = [0, 10 , 20]
 					for i, x_line in enumerate(X_LINES):
                         			label_red = "Conteo de racimos: {}".format(len(racimo_locations[i].items()))
