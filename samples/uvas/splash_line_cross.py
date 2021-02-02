@@ -72,7 +72,7 @@ VIDEO_CAPTURE_WIDTH = 1920
 VIDEO_CAPTURE_HEIGHT = 1080
 
 # Setting the line crossing
-LINE_COEFFS = [0.25, 0.5, 0.25]
+LINE_COEFFS = [0.25, 0.5, 0.75]
 X_LINES = [ int(coeff * VIDEO_CAPTURE_WIDTH) for coeff in LINE_COEFFS ]
 VIDEO_DIRECTION = 'right' # or left. If the first grape bunches appear of the left part of the video
 DISTANCE_PER_FRAME = 1 # suppose that the video was recorded with constant velocity
@@ -267,7 +267,7 @@ def detect_and_color_splash(model):
 						
 						# Update the tracker of red color
 						outputs_red = deepsort_red.update(bbox_xywh_red, cls_conf_red, splash)
-						splash = images[i]
+						splash = images[i].copy()
 						if len(outputs_red) > 0:
 							# Draw the tracker box # output red row [x1,y1,x2,y2,id_racimo]
 							bbox_xyxy_red = outputs_red[:, :4]
@@ -307,15 +307,13 @@ def detect_and_color_splash(model):
 
 					# Draw the lines in the splash
 					for x_line in X_LINES:
-						cv2.line(splash, (x_line, 0), (x_line, height), (0, 255, 255), 2)
+						splash = cv2.line(splash, (x_line, 0), (x_line, height), (0, 255, 255), 2)
 
 					# Display the counted text box
-					counts_str = ""
+					offsets = [0, 10 , 20]
 					for i, x_line in enumerate(X_LINES):
                         			label_red = "Conteo de racimos: {}".format(len(racimo_locations[i].items()))
-                        			counts_str += label_red + "\n"
-    	
-					splash = draw_text_area(splash,counts_str, (width,height) )
+									splash = draw_text_area(splash,label_red, (width,height), offset = offsets[i] )
 
 					# Display the line in the current frame and distance in meters
 					str_distance = "Distance: {:.2f} (m)".format(float(current_distance) / 100.0)
