@@ -68,8 +68,8 @@ COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "logs")
 
 # Setting some global variables
-VIDEO_CAPTURE_WIDTH = 1280
-VIDEO_CAPTURE_HEIGHT = 720
+VIDEO_CAPTURE_WIDTH = 1920
+VIDEO_CAPTURE_HEIGHT = 1080
 
 # Setting the line crossing
 LINE_COEFF = 0.5
@@ -218,7 +218,7 @@ def detect_and_color_splash(model):
 			if success == False: continue 
 
 			# resize the current frame
-			image = cv2.resize(image, (width, height)) 
+			# image = cv2.resize(image, (width, height)) 
 						
 			if success:
 				# OpenCV returns images as BGR, convert to RGB 
