@@ -267,7 +267,7 @@ def detect_and_color_splash(model):
 						
 						# Update the tracker of red color
 						outputs_red = deepsort_red.update(bbox_xywh_red, cls_conf_red, splash)
-
+						splash = images[i]
 						if len(outputs_red) > 0:
 							# Draw the tracker box # output red row [x1,y1,x2,y2,id_racimo]
 							bbox_xyxy_red = outputs_red[:, :4]
