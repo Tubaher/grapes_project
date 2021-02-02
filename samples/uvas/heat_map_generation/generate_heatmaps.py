@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
 	if args.boundary is not None:
 		TOP_BOUNDARY_COUNT = int(args.boundary)
-	cmap = cm.get_cmap('hot',256)
+	cmap = cm.get_cmap('hot',(100, 256))
 	newcolors = cmap(np.linspace(0,1,TOP_BOUNDARY_COUNT))
 	newcmp = ListedColormap(newcolors)
 	boundary = list(range(0,TOP_BOUNDARY_COUNT))
