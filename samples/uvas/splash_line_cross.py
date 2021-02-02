@@ -313,7 +313,7 @@ def detect_and_color_splash(model):
 					offsets = [0, 10 , 20]
 					for i, x_line in enumerate(X_LINES):
                         			label_red = "Conteo de racimos: {}".format(len(racimo_locations[i].items()))
-									splash = draw_text_area(splash,label_red, (width,height), offset = offsets[i] )
+						splash = draw_text_area(splash,label_red, (width,height), offset = offsets[i] )
 
 					# Display the line in the current frame and distance in meters
 					str_distance = "Distance: {:.2f} (m)".format(float(current_distance) / 100.0)
