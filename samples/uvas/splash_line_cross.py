@@ -311,9 +311,9 @@ def detect_and_color_splash(model):
 
 					# Display the counted text box
 					counts_str = ""
-                    for i, x_line in enumerate(X_LINES):
-                        label_red = "Conteo de racimos: {}".format(len(racimo_locations[i].items()))
-                        counts_str += label_red + "\n"
+					for i, x_line in enumerate(X_LINES):
+                        			label_red = "Conteo de racimos: {}".format(len(racimo_locations[i].items()))
+                        			counts_str += label_red + "\n"
     	
 					splash = draw_text_area(splash,counts_str, (width,height) )
 
