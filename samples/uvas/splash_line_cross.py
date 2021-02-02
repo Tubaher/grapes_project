@@ -257,9 +257,9 @@ def detect_and_color_splash(model):
 
 						# Put the prediction score in the bbox
 						cls_conf_red = result['red_scores']
-						for i in range(len(detections_red)):
-							cv2.putText(splash, str(result['red_scores'][i]), 
-													(int(bbox_xywh_red[i][0]), int(bbox_xywh_red[i][1])), 
+						for j in range(len(detections_red)):
+							cv2.putText(splash, str(result['red_scores'][j]), 
+													(int(bbox_xywh_red[j][0]), int(bbox_xywh_red[j][1])), 
 													cv2.FONT_HERSHEY_PLAIN, 
 													1, 
 													[255, 255, 255], 
