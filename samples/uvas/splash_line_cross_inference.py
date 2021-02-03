@@ -103,13 +103,10 @@ class InferenceConfig(Config):
     # Set batch size where, to process videos in parellel
     # Batch size = GPU_COUNT * IMAGES_PER_GPU
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 8
+    IMAGES_PER_GPU = 24
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 1  # Background + grape
-
-    # Number of training steps per epoch
-    STEPS_PER_EPOCH = 100
 
     # Skip detections with < 75% confidence
     DETECTION_MIN_CONFIDENCE = 0.9
@@ -214,8 +211,6 @@ def detect_and_color_splash(model):
             if success == False:
                 continue
 
-            # resize the current frame
-            image = cv2.resize(image, (width, height))
 
             if success:
                 # OpenCV returns images as BGR, convert to RGB
