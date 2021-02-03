@@ -107,9 +107,6 @@ class InferenceConfig(Config):
     # Number of classes (including background)
     NUM_CLASSES = 1 + 1  # Background + grape
 
-    # Number of training steps per epoch
-    STEPS_PER_EPOCH = 100
-
     # Skip detections with < 75% confidence
     DETECTION_MIN_CONFIDENCE = 0.9
 
@@ -334,10 +331,10 @@ def detect_and_color_splash(model):
                             splash, label_red, (width, height), y_offset=i)
 
                     # Display the line in the current frame and distance in meters
-                    str_distance = "Distance: {:.2f} (m)".format(
-                        float(current_distance) / 100.0)
-                    splash = draw_text_area(splash, str_distance, (width, height),
-                                            location='left-bottom', text_color=[0, 0, 255], thickness=1)
+                    # str_distance = "Distance: {:.2f} (m)".format(
+                    #     float(current_distance) / 100.0)
+                    # splash = draw_text_area(splash, str_distance, (width, height),
+                    #                         location='left-bottom', text_color=[0, 0, 255], thickness=1)
 
                     # RGB -> BGR to save image to video
                     splash = splash[..., ::-1]
