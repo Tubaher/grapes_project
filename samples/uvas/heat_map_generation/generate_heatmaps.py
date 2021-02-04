@@ -2,6 +2,7 @@ import numpy as np
 import glob
 import os
 import pickle
+import json
 import matplotlib.pyplot as plt
 import pandas as pd
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -236,10 +237,10 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
     # Load the coordenadas poly from a json file
-    if args.sat_info is not None:
-        json_file = open(args.sat_info, 'rt')
-        COORDENADAS_POLY = json.load(json_file.read())
-	
+	if args.sat_info is not None:
+		json_file = open(args.sat_info, 'rt')
+		COORDENADAS_POLY = json.load(json_file.read())
+
 	print(args.megapk)
 	DATOS = pd.read_pickle(args.megapk)
 	print(DATOS)
