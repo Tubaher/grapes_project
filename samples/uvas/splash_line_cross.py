@@ -194,7 +194,7 @@ def detect_and_color_splash(model):
                                   fps, (width, height))
 
         # Define variables to record the metadata
-        racimo_locations = {}
+        racimo_locations = {} if args.line_cross == "join" else [ {} for _ in X_LINES ]
         counters = [0 for _ in X_LINES]
         predictions_output = []
         current_distance = 0
@@ -289,14 +289,6 @@ def detect_and_color_splash(model):
                             for row in outputs_red:
                                 id_racimo = row[4]
 
-                                # Detect if the grape bunches are in the other side of the line
-                                # if VIDEO_DIRECTION == 'left':
-                                # 	xmin = row[0]
-                                # 	cross_line = xmin > X_LINES
-                                # elif VIDEO_DIRECTION == 'right':
-                                # 	xmax = row[2]
-                                # 	cross_line = xmax < X_LINES
-
                                 # Detect if the grape bunches cross the line
                                 for i, x_line in enumerate(X_LINES):
                                     xmin = row[0]
@@ -304,10 +296,21 @@ def detect_and_color_splash(model):
                                     cross_line = xmin < x_line and xmax > x_line
 
                                     # Only accumulate the no-repeated id_racimo when it crosses the line
-                                    if(id_racimo not in racimo_locations) and cross_line:
-                                        counters[i] += 1
-                                        racimo_locations.update(
-                                            {id_racimo: (frameCount, (row[2]-row[0])/2.0, current_distance)})
+                                    
+                                    # If cross line style is join use just one dict
+                                    if (args.line_cross == "join"):
+                                        if(id_racimo not in racimo_locations) and cross_line:
+                                            counters[i] += 1
+                                            racimo_locations.update(
+                                                {id_racimo: (frameCount, (row[2]-row[0])/2.0, current_distance)})
+                                                
+                                    else:
+                                    # else use dict by line to count
+                                        if(id_racimo not in racimo_locations[i]) and cross_line:
+                                            counters[i] += 1
+                                            racimo_locations[i].update(
+                                                {id_racimo: (frameCount, (row[2]-row[0])/2.0, current_distance)})
+                                            
 
                             # Get prediction info
                             for identity in identities_red:
@@ -320,17 +323,21 @@ def detect_and_color_splash(model):
 
                     # Draw the lines in the splash
                     for x_line in X_LINES:
-                        splash = cv2.line(splash, (x_line, 0),
-                                          (x_line, height), (0, 255, 255), 2)
+                        splash = cv2.line(splash, (x_line, 0),(x_line, height), (0, 0, 255), 3)
 
                     # Display the counted text box
                     for i, x_line in enumerate(X_LINES):
                         label_red = "Conteo de racimos Linea {}: {}".format(
                             i, counters[i])
                         splash = draw_text_area(
-                            splash, label_red, (width, height), y_offset=i)
-
-                    # Display the line in the current frame and distance in meters
+                            splash, label_red, (width, height), y_offset=i, thickness = 3)
+                    
+                    # Display the total count when the style is line_cross = join
+                    if args.line_cross == "join":
+                        total_str = "Racimos Totales: {}".format(sum(counters))
+                        splash = draw_text_area(splash, total_str, (width, height), y_offset=len(X_LINES), thickness = 3)
+                    
+                    # Display distance in meters
                     # str_distance = "Distance: {:.2f} (m)".format(
                     #     float(current_distance) / 100.0)
                     # splash = draw_text_area(splash, str_distance, (width, height),
@@ -363,9 +370,9 @@ def detect_and_color_splash(model):
             str(campo_id) + "_" + str(cuartel) + \
             "_" + str(hilera_id) + "_"+str(ampm)
         locations_dir = os.path.join(args.pickles_dir, "location_pickles")
-
+        
         with open(os.path.join(locations_dir, pickle_loc_name + '.pkl'), 'wb') as f:
-            pickle.dump(racimo_locations, f)
+            pickle.dump(racimo_locations, f) if args.line_cross == "join" else pickle.dump(racimo_locations[0],f)
 
         print("[INFO] Saving Pickles Locations")
 
@@ -416,6 +423,10 @@ if __name__ == '__main__':
                         default="stuff/output_videos/TestCampo",
                         metavar="path to the ouput video",
                         help='Path to the output video with the predictions')
+    parser.add_argument('--line_cross', required=False,
+                        default="disjoin",
+                        metavar="choose the style of line crossing",
+                        help="argument to choose the style of line crossing")
     args = parser.parse_args()
 
     create_dirs()

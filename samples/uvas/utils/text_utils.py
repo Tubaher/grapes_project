@@ -4,7 +4,7 @@ def draw_text_area(image, string, window_size, y_offset = 0, location = "left-to
   font = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, thickness = 1, baseline = 2, rectangle_color = [255, 255, 255], text_color = [0,0,0]):
     window_w, window_h  = window_size
     text_w, text_h = cv2.getTextSize(string, font, fontScale, thickness)[0]
-    y_offset = text_h * y_offset + 2 * padding + margin if y_offset != 0 else 0
+    y_offset = text_h * y_offset + 2 * padding * y_offset + margin * y_offset if y_offset != 0 else 0
 
     #Start the bbox from the left-top corner
     box_xmin = 0

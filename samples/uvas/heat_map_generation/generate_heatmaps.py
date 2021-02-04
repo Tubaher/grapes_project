@@ -208,6 +208,9 @@ if __name__ == '__main__':
 	parser.add_argument('--img', required=True,
 						metavar="path/to/satelite_image.jpg",
 						help="Path a la imagen satelital del campo")
+	parser.add_argument('--sat_info', required=False,
+						metavar="path/to/metadata_sat_images.json",
+						help="Path a la metadata de las imagenes satelitales")
 	parser.add_argument('--area', required=False,
 						help="Si este flag esta seteado, se cuenta la suma del area de cada segmento",
 						action="store_true")
@@ -224,6 +227,11 @@ if __name__ == '__main__':
 						metavar="path to the megapickle of the field",
 						help="Megapickle of all locations pickles of a field")
 	args = parser.parse_args()
+    
+    #Load the coordenadas poly from a json file
+    if args.sat_info is not None:
+        json_file = open(args.sat_info, 'rt')
+        COORDENADAS_POLY = json.load(json_file.read())
 	
 	print(args.megapk)
 	DATOS = pd.read_pickle(args.megapk)
