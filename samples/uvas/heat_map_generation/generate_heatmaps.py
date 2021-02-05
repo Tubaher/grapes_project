@@ -29,7 +29,7 @@ COORDENADAS_POLY = {"2": {"2": {"poly_verts": [[(641, 38), (402, 38), (388, 613)
 # Size, in pixels, of each segment in the row.
 DELTA_H = 20
 LINE_WIDTH = 1.8
-TOP_BOUNDARY_COUNT = 200
+TOP_BOUNDARY_COUNT = 120
 
 
 def read_location_pickle(frames_cuartel, pickle_filename):
@@ -214,6 +214,9 @@ if __name__ == '__main__':
     parser.add_argument('--campo', required=True,
                         metavar="path/to/loc_pickles_folder/",
                         help="Path al directorio con las carpetas de cada cuartel")
+    parser.add_argument('--campo_name', required=True,
+                        metavar="Nombre del campo",
+                        help="Nombre que se usara para la visualización del campo")
     parser.add_argument('--img', required=True,
                         metavar="path/to/satelite_image.jpg",
                         help="Path a la imagen satelital del campo")
@@ -273,7 +276,7 @@ if __name__ == '__main__':
     cbar = plt.colorbar(cm.ScalarMappable(norm=norm, cmap=newcmp),
                         cax=divider.append_axes("right", size="5%", pad=0.05),
                         ticks=cbar_ticks)
-    campo_name = args.campo.split("/")[-2]
+    campo_name = args.campo_name 
 
     if args.area:
         cbar_labels = ["{:.2e}".format(i*5000) for i in cbar_ticks]
