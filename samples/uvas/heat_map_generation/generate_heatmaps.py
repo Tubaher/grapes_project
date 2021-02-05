@@ -250,7 +250,7 @@ if __name__ == '__main__':
     print(DATOS)
 
     # The following code plots the heat maps for each quarter in curicó
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize = (10,12))
 
     if args.boundary is not None:
         TOP_BOUNDARY_COUNT = int(args.boundary)
