@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 def draw_text_area(image, string, window_size, y_offset = 0, location = "left-top", margin = 5, padding = 5, alpha = 0.65,
   font = cv2.FONT_HERSHEY_SIMPLEX, fontScale = 1, thickness = 1, baseline = 2, rectangle_color = [255, 255, 255], text_color = [0,0,0]):
@@ -34,7 +35,11 @@ def draw_text_area(image, string, window_size, y_offset = 0, location = "left-to
       box_xmax = window_w - margin
       box_ymin += margin
       box_ymax += margin
-
+    
+    print("[INFO] Frame type: ", type(image))
+    print("[INFO] Frame dtype: ", image.dtype)
+    print("[INFO] Max values ", np.amax(image))
+    print("[INFO] Max values ", np.amin(image))
     overlay = image.copy()
     
     cv2.rectangle(overlay, (box_xmin, box_ymin), (box_xmax, box_ymax), rectangle_color, thickness = -1)
