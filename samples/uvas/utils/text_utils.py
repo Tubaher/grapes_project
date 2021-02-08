@@ -36,10 +36,10 @@ def draw_text_area(image, string, window_size, y_offset = 0, location = "left-to
       box_ymin += margin
       box_ymax += margin
     
-    print("[INFO] Frame type: ", type(image))
-    print("[INFO] Frame dtype: ", image.dtype)
-    print("[INFO] Max values ", np.amax(image))
-    print("[INFO] Max values ", np.amin(image))
+    # print("[INFO] Frame type: ", type(image))
+    # print("[INFO] Frame dtype: ", image.dtype)
+    # print("[INFO] Max values ", np.amax(image))
+    # print("[INFO] Max values ", np.amin(image))
     overlay = image.copy()
     
     cv2.rectangle(overlay, (box_xmin, box_ymin), (box_xmax, box_ymax), rectangle_color, thickness = -1)

@@ -245,8 +245,11 @@ def detect_and_color_splash(model):
                         result = process_red_result(result)
 
                     # Color splash
+                    print('[INFO] splash before: ', type(images[i]))
                     splash = color_splash(images[i], result['red_masks'])
                     # splash = images[i]
+                    print('[INFO] splash after: ', type(splash))
+
 
                     # Generate bbox_xywh from detection red
                     # [N, (y1, x1, y2, x2)]
