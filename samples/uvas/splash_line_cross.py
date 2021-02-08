@@ -133,7 +133,7 @@ def color_splash(image, mask_red):
         splash = np.where(mask_red, red, image).astype(np.uint8)
 
     else:
-        splash = image #.copy()
+        splash = image.copy()
     return splash
 
 
@@ -245,10 +245,10 @@ def detect_and_color_splash(model):
                         result = process_red_result(result)
 
                     # Color splash
-                    print('[INFO] splash before: ', type(images[i]))
+                    # print('[INFO] splash before: ', type(images[i]))
                     splash = color_splash(images[i], result['red_masks'])
                     # splash = images[i]
-                    print('[INFO] splash after: ', type(splash))
+                    # print('[INFO] splash after: ', type(splash))
 
 
                     # Generate bbox_xywh from detection red
