@@ -9,7 +9,7 @@ echo "Processing Splash Videos from Campo: "$CAMPO_NAME
 for f in $VIDEO_FILES
 do  
     echo "Processing video:"$f
-	python splash_uvas.py --weights $WEIGHTS_FILE --video $f --pickles_dir $PICKLES_DIR/ --output_dir $OUTPUT_VIDEO_DIR
+	python splash_uvas_cross_line.py --weights $WEIGHTS_FILE --video $f --pickles_dir $PICKLES_DIR/ --output_dir $OUTPUT_VIDEO_DIR
     echo "Metadata and predictio video collected."
 done
 # # -------MEGA PICKLE-----
