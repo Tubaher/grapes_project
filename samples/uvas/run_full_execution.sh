@@ -1,6 +1,6 @@
 CAMPO_NAME="ConchayToro_test"
 VIDEO_FILES="stuff/input_videos/processed/$CAMPO_NAME/*"
-WEIGHTS_FILE="stuff/logs/dcomplete_pgrapes_aug/mask_rcnn_uvas_0020 .h5"
+WEIGHTS_FILE="stuff/logs/model_dcomplete_pgrapes_aug/uvas20210128T1517/mask_rcnn_uvas_0020 .h5"
 PICKLES_DIR="stuff/pickles/$CAMPO_NAME"
 OUTPUT_VIDEO_DIR="stuff/output_videos/$CAMPO_NAME"
 
