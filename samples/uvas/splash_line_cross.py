@@ -133,7 +133,7 @@ def color_splash(image, mask_red):
         splash = np.where(mask_red, red, image).astype(np.uint8)
 
     else:
-        splash = image
+        splash = image.copy()
     return splash
 
 
