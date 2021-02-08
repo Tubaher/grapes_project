@@ -214,7 +214,8 @@ def detect_and_color_splash(model):
             print("[INFO] Frame: {}".format(frameCount))
 
             success, image = vcapture.read()
-
+            print("[INFO] Frame type: ", type(image))
+            print("[INFO] Frame dtype: ", image.dtype)
             if success == False:
                 continue
 
