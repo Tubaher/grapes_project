@@ -21,12 +21,13 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0), class_label=None):
         y2 += offset[1]
         # box text and bar
         id = int(identities[i]) if identities is not None else 0  
-        color = compute_color_for_labels(id)
+        # color = compute_color_for_labels(id)
+        color = (102, 0, 255) #pink
         label = '{}: {:d}'.format(class_label, id)
-        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1 , 1)[0]
+        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 3 , 1)[0]
         cv2.rectangle(img,(x1, y1),(x2,y2),color,4)
         cv2.rectangle(img,(x1, y1),(x1+t_size[0]+3,y1+t_size[1]+4), color,-1)
-        cv2.putText(img,label,(x1,y1+t_size[1]+4), cv2.FONT_HERSHEY_PLAIN, 1, [255,255,255], 1)
+        cv2.putText(img,label,(x1,y1+t_size[1]+4), cv2.FONT_HERSHEY_PLAIN, 3, [255,255,255], 1)
     return img
 
 
