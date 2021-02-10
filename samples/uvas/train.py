@@ -79,7 +79,7 @@ class TrainConfig(Config):
     NUM_CLASSES = 1 + 1  # Background + grape
 
     # Number of epochs for keras train
-    EPOCHS = 20
+    EPOCHS = 100
 
     # Number of training steps per epoch
     STEPS_PER_EPOCH = 50

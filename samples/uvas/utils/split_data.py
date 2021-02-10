@@ -32,7 +32,7 @@ if __name__ == "__main__":
             os.makedirs(path)
 
     # define the percentage for train, validation
-    train_p = 0.7 # val_p = 1.0 - train_p
+    train_p = 0.9 # val_p = 1.0 - train_p
     
     # get the basenames in a list
     file1 = open(basenames_file, 'r') 

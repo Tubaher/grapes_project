@@ -35,8 +35,9 @@ if __name__ == "__main__":
             polygons = [r['shape_attributes'] for r in a['regions'].values()]
         else:
             polygons = [r['shape_attributes'] for r in a['regions']]
-
-        base_name = a['filename'].split(".")[0]
+        
+        file_name = a['filename'].split(".")
+        base_name = '.'.join(file_name[:-1])
         image_path = os.path.join(args.dataset_dir, "data/"+ a['filename'])
         image = io.imread(image_path)
         height, width = image.shape[:2]

@@ -432,7 +432,7 @@ if __name__ == '__main__':
                         help='Path to the output video with the predictions')
     parser.add_argument('--line_cross', required=False,
                         default="disjoin",
-                        metavar="choose the style of line crossing",
+                        metavar="choose the style of line crossing: join or disjoin",
                         help="argument to choose the style of line crossing")
     args = parser.parse_args()
 
