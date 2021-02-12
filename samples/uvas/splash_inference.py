@@ -318,9 +318,6 @@ def detect_and_color_splash(model):
 
 def create_dirs():
     # Create the needed dirs if these does not exists
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-
     output_prediction = os.path.join(args.pickles_dir, "prediction_pickles")
     if not os.path.exists(output_prediction):
         os.makedirs(output_prediction)
@@ -353,10 +350,6 @@ if __name__ == '__main__':
                         default="stuff/pickles/TestCampo",
                         metavar="path to the metada",
                         help='Path to store the pickles files')
-    parser.add_argument('--output_dir', required=False,
-                        default="stuff/output_videos/TestCampo",
-                        metavar="path to the ouput video",
-                        help='Path to the output video with the predictions')
     parser.add_argument('--line_cross', required=False,
                         default="disjoin",
                         metavar="choose the style of line crossing: join or disjoin",
