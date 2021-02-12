@@ -27,7 +27,6 @@ Usage: import the module (see Jupyter notebooks for examples), or run from
 	python3 grape.py splash --weights=last --video=<URL or path to file>
 """
 
-
 import os
 import sys
 import json
@@ -103,7 +102,7 @@ class InferenceConfig(Config):
     # Set batch size where, to process videos in parellel
     # Batch size = GPU_COUNT * IMAGES_PER_GPU
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 24
+    IMAGES_PER_GPU = 8
 
     # Number of classes (including background)
     NUM_CLASSES = 1 + 1  # Background + grape
@@ -134,7 +133,7 @@ def color_splash(image, mask_red):
         splash = np.where(mask_red, red, image).astype(np.uint8)
 
     else:
-        splash = image
+        splash = image.copy()
     return splash
 
 
@@ -182,11 +181,9 @@ def detect_and_color_splash(model):
     if args.video:
         # Video capture
         vcapture = cv2.VideoCapture(args.video)
-        width = VIDEO_CAPTURE_WIDTH
-        height = VIDEO_CAPTURE_HEIGHT
 
         # Define variables to record the metadata
-        racimo_locations = {}
+        racimo_locations = {} if args.line_cross == "join" else [ {} for _ in X_LINES ]
         counters = [0 for _ in X_LINES]
         predictions_output = []
         current_distance = 0
@@ -205,7 +202,6 @@ def detect_and_color_splash(model):
             # Print the curretn frame
             print("[INFO] Frame: {}".format(frameCount))
 
-            # if we are able to read a frame from the video
             success, image = vcapture.read()
 
             if success == False:
@@ -231,12 +227,8 @@ def detect_and_color_splash(model):
                     else:
                         result = process_red_result(result)
 
-                    # Color splash
                     splash = color_splash(images[i], result['red_masks'])
-                    # splash = images[i]
 
-                    # Generate bbox_xywh from detection red
-                    # [N, (y1, x1, y2, x2)]
                     detections_red = result["red_rois"]
                     bbox_xywh_red = np.zeros((detections_red.shape[0], 4))
 
@@ -254,20 +246,15 @@ def detect_and_color_splash(model):
 
                         # Put the prediction score in the bbox
                         cls_conf_red = result['red_scores']
-
-                        # Update the tracker of red color
                         outputs_red = deepsort_red.update(
                             bbox_xywh_red, cls_conf_red, splash)
-
+                        splash = images[i].copy()
                         if len(outputs_red) > 0:
                             # Draw the tracker box # output red row [x1,y1,x2,y2,id_racimo]
-                            bbox_xyxy_red = outputs_red[:, :4]
                             identities_red = outputs_red[:, -1]
-
-                            # Get the racimo ids if it is not include in the dict and crosses the line
-                            # with its respective frame Count and x_center
                             for row in outputs_red:
                                 id_racimo = row[4]
+
                                 # Detect if the grape bunches cross the line
                                 for i, x_line in enumerate(X_LINES):
                                     xmin = row[0]
@@ -275,10 +262,21 @@ def detect_and_color_splash(model):
                                     cross_line = xmin < x_line and xmax > x_line
 
                                     # Only accumulate the no-repeated id_racimo when it crosses the line
-                                    if(id_racimo not in racimo_locations) and cross_line:
-                                        counters[i] += 1
-                                        racimo_locations.update(
-                                            {id_racimo: (frameCount, (row[2]-row[0])/2.0, current_distance)})
+                                    
+                                    # If cross line style is join use just one dict
+                                    if (args.line_cross == "join"):
+                                        if(id_racimo not in racimo_locations) and cross_line:
+                                            counters[i] += 1
+                                            racimo_locations.update(
+                                                {id_racimo: (frameCount, (row[2]-row[0])/2.0, current_distance)})
+                                                
+                                    else:
+                                    # else use dict by line to count
+                                        if(id_racimo not in racimo_locations[i]) and cross_line:
+                                            counters[i] += 1
+                                            racimo_locations[i].update(
+                                                {id_racimo: (frameCount, (row[2]-row[0])/2.0, current_distance)})
+                                            
 
                             # Get prediction info
                             for identity in identities_red:
@@ -306,9 +304,9 @@ def detect_and_color_splash(model):
             str(campo_id) + "_" + str(cuartel) + \
             "_" + str(hilera_id) + "_"+str(ampm)
         locations_dir = os.path.join(args.pickles_dir, "location_pickles")
-
+        
         with open(os.path.join(locations_dir, pickle_loc_name + '.pkl'), 'wb') as f:
-            pickle.dump(racimo_locations, f)
+            pickle.dump(racimo_locations, f) if args.line_cross == "join" else pickle.dump(racimo_locations[0],f)
 
         print("[INFO] Saving Pickles Locations")
 
@@ -319,6 +317,10 @@ def detect_and_color_splash(model):
 
 
 def create_dirs():
+    # Create the needed dirs if these does not exists
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
     output_prediction = os.path.join(args.pickles_dir, "prediction_pickles")
     if not os.path.exists(output_prediction):
         os.makedirs(output_prediction)
@@ -351,6 +353,14 @@ if __name__ == '__main__':
                         default="stuff/pickles/TestCampo",
                         metavar="path to the metada",
                         help='Path to store the pickles files')
+    parser.add_argument('--output_dir', required=False,
+                        default="stuff/output_videos/TestCampo",
+                        metavar="path to the ouput video",
+                        help='Path to the output video with the predictions')
+    parser.add_argument('--line_cross', required=False,
+                        default="disjoin",
+                        metavar="choose the style of line crossing: join or disjoin",
+                        help="argument to choose the style of line crossing")
     args = parser.parse_args()
 
     create_dirs()
