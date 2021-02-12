@@ -29,8 +29,8 @@ COORDENADAS_POLY = {"2": {"2": {"poly_verts": [[(641, 38), (402, 38), (388, 613)
 # Size, in pixels, of each segment in the row.
 DELTA_H = 20
 LINE_WIDTH = 1.8
-TOP_BOUNDARY_COUNT = 120
-
+TOP_BOUNDARY_COUNT = 80
+AREA_SCALE = 5000
 
 def read_location_pickle(frames_cuartel, pickle_filename):
     """
@@ -86,8 +86,14 @@ def draw_lines(id_times, hilera_pts, key, value, df_cuartel, ax):
 
         #get counts and segment of the current hilera  if args.are is None
         counts, segments = count_intervals(frames, hilera_coord, frame_lim, DELTA_H)
+        
 
-        if args.area is None:
+        if not args.area:
+            
+            # When is pm reverse the detection counts list to take into consideration 
+            # the orientation of the video
+            # If both am and pm have the same orientation, remove this part
+            if id_time == 2: counts = np.flipud(counts)
             counts_total.append(counts)
         
         else:
@@ -102,20 +108,34 @@ def draw_lines(id_times, hilera_pts, key, value, df_cuartel, ax):
                     count_area[count_indx] += areas[area_indx]
                 count_skp += count
 
+            # When is pm reverse the detection counts list to take into consideration 
+            # the orientation of the video
+            # If both am and pm have the same orientation, remove this part
+            if id_time == 2: count_area = np.flipud(count_area)
+            
             counts_total.append(count_area)
-
+    
     count_t = np.zeros(shape = counts_total[0].shape)
     for count in counts_total:
         count_t += count
-
+        
     if args.area: count_t / 5000 # Por que divide para 5000?
 
     plot_heatmap(count_t, segments, ax, LINE_WIDTH, newcmp, norm)
 
     # Add, every 4 rows, the corresponding identifier number
-    if key % 4 == 0:
-        ax.text(hilera_coord[1][0], hilera_coord[1][1], key, fontsize=6,
-                color="white", verticalalignment='bottom') 
+    if key % 1 == 0:
+        offset_y = 2
+        offset_x = -7
+        #print("offset_y: ",offset_y)
+        #print("offset_x: ",offset_x)
+        if key % 2 == 0:
+            position_txt_id = (hilera_coord[1][0], hilera_coord[1][1] + offset_y)
+        else:
+            position_txt_id = (hilera_coord[0][0]+offset_x, hilera_coord[0][1] + offset_y)
+
+        ax.text(*position_txt_id, key, fontsize=6,
+                color="lightcyan", verticalalignment='bottom', fontweight = 'bold') 
 
 def map_cuartel(pickles_dir, ax, DATOS):
     """
@@ -134,11 +154,11 @@ def map_cuartel(pickles_dir, ax, DATOS):
     cuartel = pickles_dir.split("/")[-1].split("_")[2]
 
     # Saves the number of the frames of the detections as lists for each hour of each row.
-# Return
-# dict with info frames_cuartel['hilera_id']['hora']
-#
-# Each frames_cuartel['hilera_id']['hora'] has
-#   frames variable which is an numpy array with two columns [id_racimo,framecount]
+    # Return
+    # dict with info frames_cuartel['hilera_id']['hora']
+    #
+    # Each frames_cuartel['hilera_id']['hora'] has
+    #   frames variable which is an numpy array with two columns [id_racimo,framecount]
     frames_cuartel = {}
     df_cuartel = DATOS[(DATOS["CAMPO_ID"] == campo) &
                        (DATOS["CUARTEL_ID"] == cuartel)]
@@ -169,9 +189,9 @@ def map_cuartel(pickles_dir, ax, DATOS):
     hilera_min = min(list(frames_cuartel.keys()))
     # The start and end points are assigned to each individual row
     hilera_pts = {}
-    for hilera_idx in range(hilera_min, hilera_max+1):
+    for hilera_idx in list(frames_cuartel.keys()):
         hilera_pts[hilera_idx] = (
-            start_points[hilera_idx-hilera_min], end_points[hilera_idx-hilera_min])
+            start_points[hilera_idx-1], end_points[hilera_idx-1])
 
     # Draw the density of bunches in each row
 # dict key: hilera_id value: value: dict{hora: { <frames array [id_racimo,framecount]>}}
@@ -180,7 +200,7 @@ def map_cuartel(pickles_dir, ax, DATOS):
         id_time_am = [1] if 1 in value.keys() else []
         id_time_pm = [2] if 2 in value.keys() else []
         id_times = id_time_am + id_time_pm
-
+        
         draw_lines(id_times,hilera_pts, key, value, df_cuartel, ax)
 
 
@@ -194,7 +214,7 @@ if __name__ == '__main__':
                         help="Path al directorio con las carpetas de cada cuartel")
     parser.add_argument('--campo_name', required=True,
                         metavar="Nombre del campo",
-                        help="Nombre que se usara para la visualización del campo")
+                        help="Nombre que se usara para la visualizaciÃ³n del campo")
     parser.add_argument('--img', required=True,
                         metavar="path/to/satelite_image.jpg",
                         help="Path a la imagen satelital del campo")
@@ -202,11 +222,12 @@ if __name__ == '__main__':
                         metavar="path/to/metadata_sat_images.json",
                         help="Path a la metadata de las imagenes satelitales")
     parser.add_argument('--area', required=False,
+                        default=False,
                         help="Si este flag esta seteado, se cuenta la suma del area de cada segmento",
                         action="store_true")
     parser.add_argument('--boundary', required=False,
                         metavar="limite de conteo",
-                        help="Entero que define el límite de conteo de cada segmento de hilera")
+                        help="Entero que define el limite de conteo de cada segmento de hilera")
     parser.add_argument('--delta_h', required=False,
                         metavar="delta de segmento de hilera",
                         help="Longitud, en pixeles, de cada segmento de una hilera")
@@ -216,9 +237,14 @@ if __name__ == '__main__':
     parser.add_argument('--megapk', required=True,
                         metavar="path to the megapickle of the field",
                         help="Megapickle of all locations pickles of a field")
+    parser.add_argument('--output_format', required=False,
+                        default = '.png',
+                        metavar="format of the output image heatmap",
+                        help="format of the output image heatmap")                        
+                        
     args = parser.parse_args()
 
-# Load the coordenadas poly from a json file
+    # Load the coordenadas poly from a json file
     if args.sat_info is not None:
         json_file = open(args.sat_info, 'rt')
         COORDENADAS_POLY = json.load(json_file)
@@ -227,7 +253,7 @@ if __name__ == '__main__':
     DATOS = pd.read_pickle(args.megapk)
     print(DATOS)
 
-    # The following code plots the heat maps for each quarter in curicó
+    # The following code plots the heat maps for each quarter in curicÃ³
     fig, ax = plt.subplots(figsize = (13,7.5))
 
     if args.boundary is not None:
@@ -268,6 +294,11 @@ if __name__ == '__main__':
     output_location = 'stuff/heat_maps/'
     if not os.path.exists(output_location):
         os.makedirs(output_location)
-
-    plt.savefig(output_location + campo_name + '.png')
+    
+    
+    print("Saving Figure")
+    XLIM = (500, 800)
+    YLIM = (300, 0)
+    ax.set(xlim=XLIM, ylim=YLIM)
+    plt.savefig(output_location + campo_name + args.output_format)
     # plt.show()
